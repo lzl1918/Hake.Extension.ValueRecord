@@ -24,6 +24,10 @@ namespace Hake.Extension.ValueRecord
 
     public static class RecordBaseExtension
     {
+        private static bool IsValidNameChar(this char ch)
+        {
+            return ch.IsAlpha() || ch.IsNumber() || ch == '_';
+        }
         public static RecordBase FromPath(this RecordBase record, string path)
         {
             if (path == null)
@@ -53,7 +57,7 @@ namespace Hake.Extension.ValueRecord
                         else
                             throw new Exception($"record is not a set while trying to read property {key}");
                     }
-                    else if(state == 2 || state == 4 || state == 6)
+                    else if (state == 2 || state == 4 || state == 6)
                         throw new Exception("unexcepted end of path");
                     break;
                 }
@@ -62,7 +66,7 @@ namespace Hake.Extension.ValueRecord
                 if (state == 1)
                 {
                     if (ch == '[') { state = 2; }
-                    else if (ch.IsAlpha() || ch.IsNumber()) { builder.Append(ch); state = 3; }
+                    else if (ch.IsValidNameChar()) { builder.Append(ch); state = 3; }
                     else throw new Exception($"unexcepted char {ch}");
                 }
                 else if (state == 2)
@@ -82,7 +86,7 @@ namespace Hake.Extension.ValueRecord
                         builder.Clear();
                         state = 2;
                     }
-                    else if (ch.IsAlpha() || ch.IsNumber()) { builder.Append(ch); }
+                    else if (ch.IsValidNameChar()) { builder.Append(ch); }
                     else if (ch == '.')
                     {
                         key = builder.ToString();
@@ -118,7 +122,7 @@ namespace Hake.Extension.ValueRecord
                 }
                 else if (state == 6)
                 {
-                    if (ch.IsAlpha() || ch.IsNumber()) { builder.Append(ch); state = 3; }
+                    if (ch.IsValidNameChar()) { builder.Append(ch); state = 3; }
                     else throw new Exception($"unexcepted char {ch}");
                 }
                 else
@@ -126,6 +130,15 @@ namespace Hake.Extension.ValueRecord
                 index++;
             }
             return current;
+        }
+
+        public static T ReadAs<T>(this RecordBase record, string path)
+        {
+            RecordBase rec = FromPath(record, path);
+            if (rec is ScalerRecord scaler)
+                return scaler.ReadAs<T>();
+            else
+                throw new Exception("value in specific path is not a scaler");
         }
     }
 
