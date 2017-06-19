@@ -20,9 +20,9 @@ namespace Hake.Extension.ValueRecord.Json
         public static RecordBase ReadJson(TextReader reader)
         {
             InternalTextReader internalReader = new InternalTextReader(reader);
-            return ReadJson(internalReader);
+            return ReadJson(internalReader, false);
         }
-        private static RecordBase ReadJson(InternalTextReader reader)
+        private static RecordBase ReadJson(InternalTextReader reader, bool isCalledByList)
         {
             char peek;
             int state = 1;
@@ -44,6 +44,7 @@ namespace Hake.Extension.ValueRecord.Json
                     else if (peek.IsNumber()) { state = 8; }
                     else if (peek == '-') { state = 9; reader.Read(); }
                     else if (peek == '/') { state = 10; reader.Read(); }
+                    else if (peek == ']' && isCalledByList) { reader.Read(); return null; }
                     else throw BuildException($"unexcepted char '{peek}'", reader);
                 }
                 else if (state == 2)
@@ -146,7 +147,9 @@ namespace Hake.Extension.ValueRecord.Json
             int result;
             while (true)
             {
-                RecordBase record = ReadJson(reader);
+                RecordBase record = ReadJson(reader, true);
+                if (record == null)
+                    break;
                 list.Add(record);
                 while (true)
                 {
@@ -218,6 +221,7 @@ namespace Hake.Extension.ValueRecord.Json
                         state = 1;
                     }
                     else if (peek == '/') { oldstate = state; reader.Read(); state = 3; }
+                    else if (peek == '}') { reader.Read(); break; }
                     else throw BuildException($"'\"' excepted but '{peek}' scanned", reader);
                 }
                 else if (state == 1)
@@ -226,7 +230,7 @@ namespace Hake.Extension.ValueRecord.Json
                     else if (peek == ':')
                     {
                         reader.Read();
-                        RecordBase record = ReadJson(reader);
+                        RecordBase record = ReadJson(reader, false);
                         set.Add(key, record);
                         state = 2;
                     }
