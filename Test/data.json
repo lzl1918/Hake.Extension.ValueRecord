@@ -1,15 +1,21 @@
 ﻿[
-  1,
+  // comment
+  1, //end comment
   2,
   3,
   true,
   [ false, true ],
-  {
+  { //comment
     "abc": 123,
     "cde": 123,
     "b": [ 123, 123 ],
     "cs": {
       "a": 1
     }
-  }
+  },
+  [
+    1,
+    3, //comment
+    4
+  ]
 ]

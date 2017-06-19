@@ -32,7 +32,6 @@ namespace Hake.Extension.ValueRecord.Json
                     throw new Exception("unexcepted end of stream");
 
                 peek = (char)reader.Peek();
-
                 if (state == 1)
                 {
                     if (peek.IsWhiteSpace()) { reader.Read(); }
@@ -44,6 +43,7 @@ namespace Hake.Extension.ValueRecord.Json
                     else if (peek == '"') { state = 7; }
                     else if (peek.IsNumber()) { state = 8; }
                     else if (peek == '-') { state = 9; reader.Read(); }
+                    else if (peek == '/') { state = 10; reader.Read(); }
                     else throw BuildException($"unexcepted char '{peek}'", reader);
                 }
                 else if (state == 2)
@@ -96,6 +96,16 @@ namespace Hake.Extension.ValueRecord.Json
                     }
                     else throw BuildException($"unexcepted char '{peek}', number expected", reader);
                 }
+                else if (state == 10)
+                {
+                    if (peek == '/') { state = 11; reader.Read(); }
+                    else throw BuildException($"unexcepted char '{peek}'", reader);
+                }
+                else if (state == 11)
+                {
+                    if (peek == '\n') { state = 1; reader.Read(); }
+                    else reader.Read();
+                }
                 else
                     throw new Exception($"unknow state of {state}");
             }
@@ -142,14 +152,34 @@ namespace Hake.Extension.ValueRecord.Json
                 {
                     result = reader.Peek();
                     if (result == -1)
-                        throw new Exception("] excepted but end of stream reached");
+                        throw new Exception("']' excepted but end of stream reached");
                     peek = (char)result;
                     if (peek.IsWhiteSpace()) { reader.Read(); }
+                    else if (peek == '/')
+                    {
+                        reader.Read();
+                        result = reader.Peek();
+                        if (result == -1)
+                            throw new Exception("'/' excepted but end of stream reached");
+                        peek = (char)result;
+                        if (peek != '/')
+                            throw BuildException($"unexcepted char '{peek}' while scanning comment", reader);
+                        reader.Read();
+                        while (true)
+                        {
+                            result = reader.Peek();
+                            if (result == -1)
+                                throw new Exception("']' excepted but end of stream reached");
+                            peek = (char)result;
+                            if (peek == '\n') { reader.Read(); break; }
+                            reader.Read();
+                        }
+                    }
                     else { break; }
                 }
                 if (peek == ',') { reader.Read(); }
                 else if (peek == ']') { reader.Read(); break; }
-                else throw BuildException($"unexcepted char {peek} while scanning list", reader);
+                else throw BuildException($"unexcepted char '{peek}' while scanning list", reader);
             }
             return list;
         }
@@ -163,6 +193,7 @@ namespace Hake.Extension.ValueRecord.Json
             int result;
             string key = "";
             int state = 0;
+            int oldstate = 0;
             while (true)
             {
                 result = reader.Peek();
@@ -186,6 +217,7 @@ namespace Hake.Extension.ValueRecord.Json
                         key = ReadStringOrThrow(reader);
                         state = 1;
                     }
+                    else if (peek == '/') { oldstate = state; reader.Read(); state = 3; }
                     else throw BuildException($"'\"' excepted but '{peek}' scanned", reader);
                 }
                 else if (state == 1)
@@ -198,14 +230,26 @@ namespace Hake.Extension.ValueRecord.Json
                         set.Add(key, record);
                         state = 2;
                     }
+                    else if (peek == '/') { oldstate = state; reader.Read(); state = 3; }
                     else throw BuildException($"':' excepted but '{peek}' scanned", reader);
                 }
                 else if (state == 2)
                 {
                     if (peek.IsWhiteSpace()) { reader.Read(); }
+                    else if (peek == '/') { oldstate = state; reader.Read(); state = 3; }
                     else if (peek == ',') { reader.Read(); state = 0; }
                     else if (peek == '}') { reader.Read(); break; }
                     else throw BuildException($"',' or '}}' excepted but '{peek}' scanned", reader);
+                }
+                else if (state == 3)
+                {
+                    if (peek == '/') { reader.Read(); state = 4; }
+                    else throw BuildException($"'/' excepted but '{peek}' scanned", reader);
+                }
+                else if (state == 4)
+                {
+                    if (peek == '\n') { reader.Read(); state = oldstate; }
+                    else reader.Read();
                 }
                 else throw new Exception($"unknown state of {state}");
             }

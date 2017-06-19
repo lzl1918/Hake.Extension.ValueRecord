@@ -34,6 +34,7 @@ namespace Hake.Extension.ValueRecord.Json
                     hasLineCache = false;
                     return -1;
                 }
+                lineCache += '\n';
                 lineCount++;
                 hasLineCache = true;
                 lineIndex = 0;
@@ -46,6 +47,7 @@ namespace Hake.Extension.ValueRecord.Json
                     hasLineCache = false;
                     return -1;
                 }
+                lineCache += '\n';
                 lineIndex = 0;
                 lineCount++;
             }
@@ -61,6 +63,7 @@ namespace Hake.Extension.ValueRecord.Json
                     hasLineCache = false;
                     return -1;
                 }
+                lineCache += '\n';
                 lineCount++;
                 hasLineCache = true;
                 lineIndex = 0;
@@ -73,6 +76,7 @@ namespace Hake.Extension.ValueRecord.Json
                     hasLineCache = false;
                     return -1;
                 }
+                lineCache += '\n';
                 lineIndex = 0;
                 lineCount++;
             }
