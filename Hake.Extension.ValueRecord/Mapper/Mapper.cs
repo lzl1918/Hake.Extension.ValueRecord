@@ -77,8 +77,10 @@ namespace Hake.Extension.ValueRecord.Mapper
         {
             if (record is ScalerRecord scalerRecord)
             {
-                if (type.Equals(scalerRecord.Value.GetType()))
+                if (scalerRecord.Value != null && type.Equals(scalerRecord.Value.GetType()))
                     return scalerRecord.Value;
+                if (scalerRecord.Value == null && !type.IsValueType)
+                    return null;
 
                 if (type.IsEnum)
                 {
