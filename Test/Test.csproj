@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ValueRecord\Hake.Extension.ValueRecord.csproj" />
+    <ProjectReference Include="..\Hake.Extension.ValueRecord\Hake.Extension.ValueRecord.csproj" />
   </ItemGroup>
 
   <ItemGroup>
