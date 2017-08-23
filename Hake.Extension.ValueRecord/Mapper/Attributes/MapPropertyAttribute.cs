@@ -4,17 +4,25 @@ using System.Text;
 
 namespace Hake.Extension.ValueRecord.Mapper
 {
+    public enum MissingAction
+    {
+        Throw,
+        TypeDefault,
+        GivenValue,
+        CreateInstance,
+    }
+
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public sealed class MapPropertyAttribute : Attribute
     {
         public string Name { get; }
-        public bool Required { get; }
+        public MissingAction MissingAction { get; }
         public object DefaultValue { get; }
 
-        public MapPropertyAttribute(string name = null, bool required = false, object defaultValue = null)
+        public MapPropertyAttribute(string name = null, MissingAction missingAction = MissingAction.Throw, object defaultValue = null)
         {
             Name = name;
-            Required = required;
+            MissingAction = missingAction;
             DefaultValue = defaultValue;
         }
     }

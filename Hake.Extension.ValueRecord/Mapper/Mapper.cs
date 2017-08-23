@@ -166,21 +166,25 @@ namespace Hake.Extension.ValueRecord.Mapper
                             parameter[0] = ToObject(property.PropertyType, valueRecord);
                             setMethod.Invoke(instance, parameter);
                         }
-                        else if (!mapPropertyAttribute.Required)
-                        {
-                            if (mapPropertyAttribute.DefaultValue == null)
-                            {
-                                parameter[0] = GetDefault(property.PropertyType);
-                                setMethod.Invoke(instance, parameter);
-                            }
-                            else
-                            {
-                                parameter[0] = mapPropertyAttribute.DefaultValue;
-                                setMethod.Invoke(instance, parameter);
-                            }
-                        }
                         else
-                            throw new Exception($"missing property {propertyName}");
+                        {
+                            switch (mapPropertyAttribute.MissingAction)
+                            {
+                                case MissingAction.TypeDefault:
+                                    parameter[0] = GetDefault(property.PropertyType);
+                                    break;
+                                case MissingAction.GivenValue:
+                                    parameter[0] = mapPropertyAttribute.DefaultValue;
+                                    break;
+                                case MissingAction.CreateInstance:
+                                    parameter[0] = Activator.CreateInstance(property.PropertyType);
+                                    break;
+                                case MissingAction.Throw:
+                                default:
+                                    throw new Exception($"missing property {propertyName}");
+                            }
+                            setMethod.Invoke(instance, parameter);
+                        }
                     }
                     return instance;
                 }
