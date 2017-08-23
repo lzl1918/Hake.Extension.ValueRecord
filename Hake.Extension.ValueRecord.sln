@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hake.Extension.ValueRecord", "ValueRecord\Hake.Extension.ValueRecord.csproj", "{F9989628-FAB0-445D-902F-17C936373D2F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hake.Extension.ValueRecord", "Hake.Extension.ValueRecord\Hake.Extension.ValueRecord.csproj", "{F9989628-FAB0-445D-902F-17C936373D2F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{ABBA39C6-3A43-484E-9CC3-CCF0AA625CC8}"
 EndProject
