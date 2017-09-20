@@ -1,4 +1,4 @@
-﻿using Hake.Extension.ValueRecord.Json.Scanners;
+﻿using Hake.Extension.ValueRecord.Internal.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Text;

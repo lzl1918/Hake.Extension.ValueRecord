@@ -9,7 +9,7 @@ namespace Hake.Extension.ValueRecord.Json
     {
         public static string Json(this RecordBase record)
         {
-            return JsonStringConverter.RecordJson(record);
+            return JsonStringConverter.Json(record);
         }
 
         public static RecordBase ReadJson(string json)

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Hake.Extension.ValueRecord.Json
+namespace Hake.Extension.ValueRecord.Internal
 {
     internal class InternalTextReader
     {

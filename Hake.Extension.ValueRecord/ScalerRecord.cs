@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Hake.Extension.ValueRecord.Helpers;
+using Hake.Extension.ValueRecord.Internal.Helpers;
 using System.Diagnostics;
 
 namespace Hake.Extension.ValueRecord

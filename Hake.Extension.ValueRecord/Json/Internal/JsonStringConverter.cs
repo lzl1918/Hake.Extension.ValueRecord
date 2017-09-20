@@ -1,4 +1,4 @@
-﻿using Hake.Extension.ValueRecord.Helpers;
+﻿using Hake.Extension.ValueRecord.Internal.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,19 +8,16 @@ namespace Hake.Extension.ValueRecord.Json
 {
     internal static class JsonStringConverter
     {
-        public static string RecordJson(RecordBase record)
-        {
-            return RecordJson(record, 0, true);
-        }
+        public static string Json(RecordBase record) => Json(record, 0, true);
 
-        private static string RecordJson(RecordBase record, int indent, bool ignoreFirstIndent)
+        private static string Json(RecordBase record, int indent, bool ignoreFirstIndent)
         {
-            if (record is ScalerRecord)
-                return ScalerJson(record as ScalerRecord, indent, ignoreFirstIndent);
-            else if (record is SetRecord)
-                return SetJson(record as SetRecord, indent, ignoreFirstIndent);
-            else if (record is ListRecord)
-                return ListJson(record as ListRecord, indent, ignoreFirstIndent);
+            if (record is ScalerRecord scaler)
+                return ScalerJson(scaler, indent, ignoreFirstIndent);
+            else if (record is SetRecord set)
+                return SetJson(set, indent, ignoreFirstIndent);
+            else if (record is ListRecord list)
+                return ListJson(list, indent, ignoreFirstIndent);
             else
                 throw new NotSupportedException($"cannot parse json of record {record.GetType().Name}");
         }
@@ -61,7 +58,7 @@ namespace Hake.Extension.ValueRecord.Json
             {
                 builder.AppendLine();
                 builder.AppendIndent(indentPlus);
-                builder.AppendFormat("\"{0}\": {1}", pair.Key, RecordJson(pair.Value, indentPlus, true));
+                builder.AppendFormat("\"{0}\": {1}", pair.Key, Json(pair.Value, indentPlus, true));
                 builder.Append(',');
             }
             if (builder.Length > 0)
@@ -82,7 +79,7 @@ namespace Hake.Extension.ValueRecord.Json
             {
                 foreach (var value in record)
                 {
-                    builder.Append(RecordJson(value, indentPlus, true));
+                    builder.Append(Json(value, indentPlus, true));
                     builder.Append(',');
                 }
                 if (record.Count > 0)
@@ -94,7 +91,7 @@ namespace Hake.Extension.ValueRecord.Json
                 foreach (var value in record)
                 {
                     builder.AppendLine();
-                    builder.Append(RecordJson(value, indentPlus, false));
+                    builder.Append(Json(value, indentPlus, false));
                     builder.Append(',');
                 }
                 if (builder.Length > 0)

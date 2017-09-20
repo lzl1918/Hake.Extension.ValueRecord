@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hake.Extension.ValueRecord.Internal;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -8,14 +9,8 @@ namespace Hake.Extension.ValueRecord.Json
 
     internal static class StringJsonConverter
     {
-        private static bool IsWhiteSpace(this char value)
-        {
-            return " \t\v\r\n".IndexOf(value) >= 0;
-        }
-        private static bool IsNumber(this char value)
-        {
-            return value >= '0' && value <= '9';
-        }
+        private static bool IsWhiteSpace(this char value) => " \t\v\r\n".IndexOf(value) >= 0;
+        private static bool IsNumber(this char value) => value >= '0' && value <= '9';
 
         public static RecordBase ReadJson(TextReader reader)
         {
@@ -114,13 +109,13 @@ namespace Hake.Extension.ValueRecord.Json
 
         private static object ReadNumberOrThrow(InternalTextReader reader)
         {
-            if (Scanners.NumberScanner.TryScanNumber(reader, out object result) == false)
+            if (Internal.Scanners.NumberScanner.TryScanNumber(reader, out object result) == false)
                 throw BuildException("unexcepted char occurred while scanning number", reader);
             return result;
         }
         private static string ReadStringOrThrow(InternalTextReader reader)
         {
-            if (Scanners.StringScanner.TryScanString(reader, out string result) == false)
+            if (Internal.Scanners.StringScanner.TryScanString(reader, out string result) == false)
                 throw BuildException("unexcepted char occurred while scanning string", reader);
             return result;
         }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Hake.Extension.ValueRecord.Helpers
+namespace Hake.Extension.ValueRecord.Internal.Helpers
 {
     internal static class StringBuilderHelper
     {

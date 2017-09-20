@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Hake.Extension.ValueRecord.Internal;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Hake.Extension.ValueRecord.Json.Scanners
+namespace Hake.Extension.ValueRecord.Json.Internal.Scanners
 {
     internal static class StringScanner
     {
