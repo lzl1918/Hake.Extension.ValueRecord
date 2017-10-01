@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -19,23 +20,44 @@ namespace Hake.Extension.ValueRecord.Mapper
                 return new ScalerRecord(null);
 
             Type valueType = input.GetType();
+#if NETSTANDARD1_2
+            TypeInfo valueTypeInfo = valueType.GetTypeInfo();
+#endif
+
+#if NETSTANDARD2_0 || NET452
             if (valueType.IsEnum)
+#else
+            if (valueTypeInfo.IsEnum)
+#endif
             {
                 string typeName = $"{valueType.Namespace}.{valueType.Name}";
                 string writeValue = $"{typeName}.{input}";
                 return new ScalerRecord(writeValue);
             }
 
+#if NETSTANDARD2_0 || NET452
             if (valueType.IsPrimitive)
+#else
+            if (valueTypeInfo.IsPrimitive)
+#endif
                 return new ScalerRecord(input);
 
             if (valueType.Name == "String" && valueType.Namespace == "System")
                 return new ScalerRecord(input);
 
+#if NETSTANDARD2_0 || NET452
             Type ienumType = valueType.GetInterface("System.Collections.IEnumerable");
+#else
+            Type ienumType = valueTypeInfo.ImplementedInterfaces.FirstOrDefault(t => t.FullName == "System.Collections.IEnumerable");
+            TypeInfo ienumTypeInfo = ienumType == null ? null : ienumType.GetTypeInfo();
+#endif
             if (ienumType != null)
             {
+#if NETSTANDARD2_0 || NET452
                 MethodInfo getEnumeratorMethod = ienumType.GetMethod("GetEnumerator");
+#else
+                MethodInfo getEnumeratorMethod = ienumTypeInfo.DeclaredMethods.FirstOrDefault(m => m.Name == "GetEnumerator");
+#endif
                 IEnumerator enumerator = (IEnumerator)getEnumeratorMethod.Invoke(input, null);
                 ListRecord listRecord = new ListRecord();
                 while (enumerator.MoveNext())
@@ -43,14 +65,22 @@ namespace Hake.Extension.ValueRecord.Mapper
                 return listRecord;
             }
 
+#if NETSTANDARD2_0 || NET452
             if (valueType.IsClass)
+#else
+            if (valueTypeInfo.IsClass)
+#endif
             {
+#if NETSTANDARD2_0 || NET452
                 BindingFlags propertyFlags = BindingFlags.Instance;
 #if PROPERTY_PUBLIC_ONLY
                 propertyFlags |= BindingFlags.Public;
+                PropertyInfo[] properties = valueType.GetProperties(propertyFlags);
+#endif
+#else
+                PropertyInfo[] properties = valueTypeInfo.DeclaredProperties.ToArray();
 #endif
                 SetRecord setRecord = new SetRecord();
-                PropertyInfo[] properties = valueType.GetProperties(propertyFlags);
                 MapPropertyAttribute mapPropertyAttribute;
                 MethodInfo getMethod;
                 string propertyName;
@@ -75,14 +105,25 @@ namespace Hake.Extension.ValueRecord.Mapper
 
         public static object ToObject(Type type, RecordBase record)
         {
+#if NETSTANDARD1_2
+            TypeInfo typeInfo = type.GetTypeInfo();
+#endif
             if (record is ScalerRecord scalerRecord)
             {
                 if (scalerRecord.Value != null && type.Equals(scalerRecord.Value.GetType()))
                     return scalerRecord.Value;
+#if NETSTANDARD2_0 || NET452
                 if (scalerRecord.Value == null && !type.IsValueType)
+#else
+                if (scalerRecord.Value == null && !typeInfo.IsValueType)
+#endif
                     return null;
 
+#if NETSTANDARD2_0 || NET452
                 if (type.IsEnum)
+#else
+                if (typeInfo.IsEnum)
+#endif
                 {
                     if (scalerRecord.ScalerType == ScalerType.String)
                     {
@@ -94,7 +135,12 @@ namespace Hake.Extension.ValueRecord.Mapper
                     }
                     throw new InvalidCastException($"can not cast to enum type, string excepted but {scalerRecord.ScalerType} received");
                 }
+
+#if NETSTANDARD2_0 || NET452
                 if (type.IsPrimitive)
+#else
+                if (typeInfo.IsPrimitive)
+#endif
                     return Convert.ChangeType(scalerRecord.Value, type);
                 if (type.Name == "String" && type.Namespace == "System" && scalerRecord.ScalerType == ScalerType.String)
                     return scalerRecord.Value;
@@ -108,7 +154,11 @@ namespace Hake.Extension.ValueRecord.Mapper
                     foreach (RecordBase re in listRecord)
                         elements.Add(ToObject(elementType, re));
                     object array = Activator.CreateInstance(type, elements.Count);
+#if NETSTANDARD2_0 || NET452
                     MethodInfo setMethodInfo = type.GetMethod("Set", BindingFlags.Instance | BindingFlags.Public);
+#else
+                    MethodInfo setMethodInfo = typeInfo.GetDeclaredMethod("Set");
+#endif
                     object[] parameters = new object[2];
                     for (int i = 0; i < elements.Count; i++)
                     {
@@ -118,10 +168,15 @@ namespace Hake.Extension.ValueRecord.Mapper
                     }
                     return array;
                 }
-
+#if NETSTANDARD2_0 || NET452
                 Type ienumerableType = type.GetInterface("System.Collections.Generic.IEnumerable`1");
+#else
+                Type ienumerableType = typeInfo.ImplementedInterfaces.FirstOrDefault(t => t.FullName == "System.Collections.Generic.IEnumerable`1");
+                TypeInfo ienumerableTypeInfo = ienumerableType == null ? null : ienumerableType.GetTypeInfo();
+#endif
                 if (ienumerableType != null)
                 {
+#if NETSTANDARD2_0 || NET452
                     Type elementType = ienumerableType.GetGenericArguments()[0];
                     Type listType = LIST_GENERIC_TYPE.MakeGenericType(elementType);
                     if (type.IsAssignableFrom(listType))
@@ -136,19 +191,43 @@ namespace Hake.Extension.ValueRecord.Mapper
                         }
                         return list;
                     }
-
+#else
+                    Type elementType = ienumerableTypeInfo.GenericTypeParameters[0];
+                    Type listType = LIST_GENERIC_TYPE.MakeGenericType(elementType);
+                    TypeInfo listTypeInfo = listType.GetTypeInfo();
+                    if (typeInfo.IsAssignableFrom(listTypeInfo))
+                    {
+                        object list = Activator.CreateInstance(listType);
+                        MethodInfo addMethod = listTypeInfo.GetDeclaredMethod("Add");
+                        object[] parameters = new object[1];
+                        foreach (RecordBase re in listRecord)
+                        {
+                            parameters[0] = ToObject(elementType, re);
+                            addMethod.Invoke(list, parameters);
+                        }
+                        return list;
+                    }
+#endif
                 }
             }
             else if (record is SetRecord setRecord)
             {
+#if NETSTANDARD2_0 || NET452
                 if (type.IsClass)
+#else
+                if (typeInfo.IsClass)
+#endif
                 {
                     object instance = Activator.CreateInstance(type);
+#if NETSTANDARD2_0 || NET452
                     BindingFlags propertyFlags = BindingFlags.Instance;
 #if PROPERTY_PUBLIC_ONLY
                     propertyFlags |= BindingFlags.Public;
 #endif
                     PropertyInfo[] properties = type.GetProperties(propertyFlags);
+#else
+                    PropertyInfo[] properties = typeInfo.DeclaredProperties.ToArray();
+#endif
                     MapPropertyAttribute mapPropertyAttribute;
                     MethodInfo setMethod;
                     string propertyName;
@@ -213,7 +292,11 @@ namespace Hake.Extension.ValueRecord.Mapper
         }
         private static object GetDefault(Type type)
         {
+#if NETSTANDARD2_0
             if (type.IsValueType)
+#else
+            if (type.GetTypeInfo().IsValueType)
+#endif
                 return Activator.CreateInstance(type);
             else
                 return null;
