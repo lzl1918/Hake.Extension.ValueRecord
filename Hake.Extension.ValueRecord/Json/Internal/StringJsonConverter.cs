@@ -12,12 +12,12 @@ namespace Hake.Extension.ValueRecord.Json
         private static bool IsWhiteSpace(this char value) => " \t\v\r\n".IndexOf(value) >= 0;
         private static bool IsNumber(this char value) => value >= '0' && value <= '9';
 
-        public static RecordBase ReadJson(TextReader reader)
+        public static RecordBase ReadJson(TextReader reader, bool ignoreKeyCase = false)
         {
             InternalTextReader internalReader = new InternalTextReader(reader);
-            return ReadJson(internalReader, false);
+            return ReadJson(internalReader, false, ignoreKeyCase);
         }
-        private static RecordBase ReadJson(InternalTextReader reader, bool isCalledByList)
+        private static RecordBase ReadJson(InternalTextReader reader, bool isCalledByList, bool ignoreKeyCase)
         {
             char peek;
             int state = 1;
@@ -44,11 +44,11 @@ namespace Hake.Extension.ValueRecord.Json
                 }
                 else if (state == 2)
                 {
-                    return ReadList(reader);
+                    return ReadList(reader, ignoreKeyCase);
                 }
                 else if (state == 3)
                 {
-                    return ReadSet(reader);
+                    return ReadSet(reader, ignoreKeyCase);
                 }
                 else if (state == 4)
                 {
@@ -132,7 +132,7 @@ namespace Hake.Extension.ValueRecord.Json
                     throw BuildException($"Invalid char, {ch} expected but {(char)read} scanned", reader);
             }
         }
-        private static ListRecord ReadList(InternalTextReader reader)
+        private static ListRecord ReadList(InternalTextReader reader, bool ignoreKeyCase)
         {
             // resolve '['
             reader.Read();
@@ -142,7 +142,7 @@ namespace Hake.Extension.ValueRecord.Json
             int result;
             while (true)
             {
-                RecordBase record = ReadJson(reader, true);
+                RecordBase record = ReadJson(reader, true, ignoreKeyCase);
                 if (record == null)
                     break;
                 list.Add(record);
@@ -181,12 +181,12 @@ namespace Hake.Extension.ValueRecord.Json
             }
             return list;
         }
-        private static SetRecord ReadSet(InternalTextReader reader)
+        private static SetRecord ReadSet(InternalTextReader reader, bool ignoreKeyCase)
         {
             // resolve '{'
             reader.Read();
 
-            SetRecord set = new SetRecord();
+            SetRecord set = new SetRecord(ignoreKeyCase);
             char peek;
             int result;
             string key = "";
@@ -225,7 +225,7 @@ namespace Hake.Extension.ValueRecord.Json
                     else if (peek == ':')
                     {
                         reader.Read();
-                        RecordBase record = ReadJson(reader, false);
+                        RecordBase record = ReadJson(reader, false, ignoreKeyCase);
                         set.Add(key, record);
                         state = 2;
                     }

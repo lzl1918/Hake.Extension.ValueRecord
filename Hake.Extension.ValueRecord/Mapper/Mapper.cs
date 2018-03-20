@@ -14,7 +14,7 @@ namespace Hake.Extension.ValueRecord.Mapper
     {
         private static readonly Type LIST_GENERIC_TYPE = typeof(List<object>).GetGenericTypeDefinition();
 
-        public static RecordBase ToRecord(object input)
+        public static RecordBase ToRecord(object input, bool ignoreKeyCase = false)
         {
             if (input == null)
                 return new ScalerRecord(null);
@@ -61,7 +61,7 @@ namespace Hake.Extension.ValueRecord.Mapper
                 IEnumerator enumerator = (IEnumerator)getEnumeratorMethod.Invoke(input, null);
                 ListRecord listRecord = new ListRecord();
                 while (enumerator.MoveNext())
-                    listRecord.Add(ToRecord(enumerator.Current));
+                    listRecord.Add(ToRecord(enumerator.Current, ignoreKeyCase));
                 return listRecord;
             }
 
@@ -80,7 +80,7 @@ namespace Hake.Extension.ValueRecord.Mapper
 #else
                 PropertyInfo[] properties = valueTypeInfo.DeclaredProperties.ToArray();
 #endif
-                SetRecord setRecord = new SetRecord();
+                SetRecord setRecord = new SetRecord(ignoreKeyCase);
                 MapPropertyAttribute mapPropertyAttribute;
                 MethodInfo getMethod;
                 string propertyName;
@@ -95,7 +95,7 @@ namespace Hake.Extension.ValueRecord.Mapper
                         continue;
                     propertyName = GetNameOrDefault(property, mapPropertyAttribute);
                     propertyValue = getMethod.Invoke(input, null);
-                    setRecord.Add(propertyName, ToRecord(propertyValue));
+                    setRecord.Add(propertyName, ToRecord(propertyValue, ignoreKeyCase));
                 }
                 return setRecord;
             }

@@ -82,17 +82,26 @@ namespace Hake.Extension.ValueRecord
         }
         #endregion interfaces implementations
 
-        public SetRecord() : base(RecordType.Set)
+        public SetRecord(bool ignoreKeyCase = false) : base(RecordType.Set)
         {
-            records = new Dictionary<string, RecordBase>();
+            if (ignoreKeyCase)
+                records = new Dictionary<string, RecordBase>(StringComparer.OrdinalIgnoreCase);
+            else
+                records = new Dictionary<string, RecordBase>();
         }
-        public SetRecord(IDictionary<string, RecordBase> records) : base(RecordType.Set)
+        public SetRecord(IDictionary<string, RecordBase> records, bool ignoreKeyCase = false) : base(RecordType.Set)
         {
-            this.records = new Dictionary<string, RecordBase>(records);
+            if (ignoreKeyCase)
+                this.records = new Dictionary<string, RecordBase>(records, StringComparer.OrdinalIgnoreCase);
+            else
+                this.records = new Dictionary<string, RecordBase>(records);
         }
-        public SetRecord(int capacity) : base(RecordType.Set)
+        public SetRecord(int capacity, bool ignoreKeyCase = false) : base(RecordType.Set)
         {
-            records = new Dictionary<string, RecordBase>(capacity);
+            if (ignoreKeyCase)
+                records = new Dictionary<string, RecordBase>(capacity, StringComparer.OrdinalIgnoreCase);
+            else
+                records = new Dictionary<string, RecordBase>(capacity);
         }
     }
 }

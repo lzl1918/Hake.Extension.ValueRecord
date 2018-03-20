@@ -26,9 +26,10 @@ namespace Hake.Extension.ValueRecord
     {
         private static bool IsValidNameChar(this char ch)
         {
-            return ch.IsAlpha() || ch.IsNumber() || ch == '_';
+            return ch.IsAlpha() || ch.IsNumber() || ch == '_' || ch == '-';
         }
-        public static RecordBase FromPath(this RecordBase record, string path)
+
+        public static RecordBase RecordFromPath(this RecordBase record, string path)
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
@@ -131,14 +132,217 @@ namespace Hake.Extension.ValueRecord
             }
             return current;
         }
+        public static bool TryGetRecordFromPath(this RecordBase record, string path, out RecordBase result)
+        {
+            if (path == null)
+            {
+                result = null;
+                return false;
+            }
+            if (record == null)
+            {
+                result = null;
+                return false;
+            }
+            if (path.Length <= 0)
+            {
+                result = null;
+                return false;
+            }
+
+            RecordBase current = record;
+            char ch;
+            int index = 0;
+            int len = path.Length;
+            int state = 1;
+            StringBuilder builder = new StringBuilder(path.Length);
+            string key;
+            int listindex;
+            while (true)
+            {
+                if (index >= path.Length)
+                {
+                    if (state == 3)
+                    {
+                        key = builder.ToString();
+                        if (current is SetRecord set)
+                        {
+                            if (!set.TryGetValue(key, out current))
+                            {
+                                result = null;
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            result = null;
+                            return false;
+                        }
+                    }
+                    else if (state == 2 || state == 4 || state == 6)
+                    {
+                        result = null;
+                        return false;
+                    }
+                    break;
+                }
+
+                ch = path[index];
+                if (state == 1)
+                {
+                    if (ch == '[') { state = 2; }
+                    else if (ch.IsValidNameChar()) { builder.Append(ch); state = 3; }
+                    else
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+                else if (state == 2)
+                {
+                    if (ch.IsNumber()) { builder.Append(ch); state = 4; }
+                    else
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+                else if (state == 3)
+                {
+                    if (ch == '[')
+                    {
+                        key = builder.ToString();
+                        if (current is SetRecord set)
+                        {
+                            if (!set.TryGetValue(key, out current))
+                            {
+                                result = null;
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            result = null;
+                            return false;
+                        }
+                        builder.Clear();
+                        state = 2;
+                    }
+                    else if (ch.IsValidNameChar()) { builder.Append(ch); }
+                    else if (ch == '.')
+                    {
+                        key = builder.ToString();
+                        if (current is SetRecord set)
+                        {
+                            if (!set.TryGetValue(key, out current))
+                            {
+                                result = null;
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            result = null;
+                            return false;
+                        }
+                        builder.Clear();
+                        state = 6;
+                    }
+                    else
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+                else if (state == 4)
+                {
+                    if (ch.IsNumber()) { builder.Append(ch); }
+                    else if (ch == ']')
+                    {
+                        if (!int.TryParse(builder.ToString(), out listindex))
+                        {
+                            result = null;
+                            return false;
+                        }
+                        if (current is ListRecord list)
+                        {
+                            if (list.Count <= listindex)
+                            {
+                                result = null;
+                                return false;
+                            }
+                            current = list[listindex];
+                        }
+                        else
+                        {
+                            result = null;
+                            return false;
+                        }
+                        builder.Clear();
+                        state = 5;
+                    }
+                    else
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+                else if (state == 5)
+                {
+                    if (ch == '[') { state = 2; }
+                    else if (ch == '.') { state = 6; }
+                    else
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+                else if (state == 6)
+                {
+                    if (ch.IsValidNameChar()) { builder.Append(ch); state = 3; }
+                    else
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+                else
+                {
+                    result = null;
+                    return false;
+                }
+
+                index++;
+            }
+            result = current;
+            return true;
+        }
 
         public static T ReadAs<T>(this RecordBase record, string path)
         {
-            RecordBase rec = FromPath(record, path);
+            RecordBase rec = RecordFromPath(record, path);
             if (rec is ScalerRecord scaler)
                 return scaler.ReadAs<T>();
             else
                 throw new Exception("value in specific path is not a scaler");
+        }
+        public static bool TryReadAs<T>(this RecordBase record, string path, out T value)
+        {
+            if (!TryGetRecordFromPath(record, path, out RecordBase rec))
+            {
+                value = default(T);
+                return false;
+            }
+
+            if (rec is ScalerRecord scaler)
+            {
+                return scaler.TryReadAs<T>(out value);
+            }
+            else
+            {
+                value = default(T);
+                return false;
+            }
         }
     }
 
