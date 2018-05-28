@@ -6,7 +6,7 @@
   true,
   [ false, true ],
   { //comment
-    "abc": 123,
+    "abc": 1231231,
     "cde": 123,
     "b": [ 123, 123 ],
     "cs": {

@@ -34,7 +34,7 @@ namespace Hake.Extension.ValueRecord.Json
                 case ScalerType.String:
                     builder.AppendFormat("\"{0}\"", record.Value);
                     break;
-                case ScalerType.Int:
+                case ScalerType.Decimal:
                 case ScalerType.Double:
                     builder.Append(record.Value.ToString());
                     break;

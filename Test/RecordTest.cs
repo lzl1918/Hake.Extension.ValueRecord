@@ -19,11 +19,14 @@ namespace Test
         [TestMethod]
         public void TestFromJson()
         {
+            decimal d = 1234;
+            long v = (long)d;
             Stream file = File.OpenRead("data.json");
             RecordBase record = Converter.ReadJson(file);
+            ScalerRecord scaler = (ScalerRecord)record.RecordFromPath("[5].abc");
+            long value = scaler.ReadAs<long>();
             file.Dispose();
             string json = record.Json();
-            RecordBase get = record.FromPath("[5].cs.a");
         }
     }
 }

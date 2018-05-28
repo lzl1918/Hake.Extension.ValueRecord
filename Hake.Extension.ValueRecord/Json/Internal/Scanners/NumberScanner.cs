@@ -70,8 +70,8 @@ namespace Hake.Extension.ValueRecord.Json.Internal.Scanners
                             }
                             else
                             {
-                                int intval = int.Parse(stb.ToString());
-                                int elpVal = int.Parse(elpPrefix);
+                                double intval = double.Parse(stb.ToString());
+                                double elpVal = double.Parse(elpPrefix);
                                 double pow = Math.Pow(10.0, intval);
                                 result = elpVal * pow;
                                 return true;
@@ -79,7 +79,7 @@ namespace Hake.Extension.ValueRecord.Json.Internal.Scanners
                         }
                         else if (state == 8)
                         {
-                            result = int.Parse(stb.ToString(), System.Globalization.NumberStyles.HexNumber);
+                            result = decimal.Parse(stb.ToString(), System.Globalization.NumberStyles.HexNumber);
                             return true;
                         }
                         else if (state == 3)
@@ -88,18 +88,18 @@ namespace Hake.Extension.ValueRecord.Json.Internal.Scanners
                             if (str.All(c => c <= '7') && str[0] == '0')
                             {
                                 // TODO: oct number
-                                result = int.Parse(str);
+                                result = decimal.Parse(str);
                                 return true;
                             }
                             else
                             {
-                                result = int.Parse(str);
+                                result = decimal.Parse(str);
                                 return true;
                             }
                         }
                         else
                         {
-                            result = int.Parse(stb.ToString());
+                            result = decimal.Parse(stb.ToString());
                             return true;
                         }
                     }
@@ -133,8 +133,8 @@ namespace Hake.Extension.ValueRecord.Json.Internal.Scanners
                         }
                         else
                         {
-                            int intval = int.Parse(stb.ToString());
-                            int elpVal = int.Parse(elpPrefix);
+                            double intval = double.Parse(stb.ToString());
+                            double elpVal = double.Parse(elpPrefix);
                             double pow = Math.Pow(10.0, intval);
                             result = elpVal * pow;
                             return true;
@@ -142,7 +142,7 @@ namespace Hake.Extension.ValueRecord.Json.Internal.Scanners
                     }
                     else if (state == 8)
                     {
-                        result = int.Parse(stb.ToString(), System.Globalization.NumberStyles.HexNumber);
+                        result = decimal.Parse(stb.ToString(), System.Globalization.NumberStyles.HexNumber);
                         return true;
                     }
                     else if (state == 3)
@@ -151,18 +151,18 @@ namespace Hake.Extension.ValueRecord.Json.Internal.Scanners
                         if (str.All(c => c <= '7') && str[0] == '0')
                         {
                             // TODO: oct number
-                            result = int.Parse(str);
+                            result = decimal.Parse(str);
                             return true;
                         }
                         else
                         {
-                            result = int.Parse(str);
+                            result = decimal.Parse(str);
                             return true;
                         }
                     }
                     else
                     {
-                        result = int.Parse(stb.ToString());
+                        result = decimal.Parse(stb.ToString());
                         return true;
                     }
                 }
