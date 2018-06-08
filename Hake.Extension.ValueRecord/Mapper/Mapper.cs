@@ -129,9 +129,46 @@ namespace Hake.Extension.ValueRecord.Mapper
                     {
                         string enumString = (string)scalerRecord.Value;
                         int pointIndex = enumString.LastIndexOf('.');
-                        string typeString = enumString.Substring(0, pointIndex);
-                        string valueString = enumString.Substring(pointIndex + 1);
-                        return Enum.Parse(type, valueString);
+                        if (pointIndex < 0)
+                        {
+                            try
+                            {
+                                return Enum.Parse(type, enumString);
+                            }
+                            catch (ArgumentException)
+                            {
+                                string[] names = Enum.GetNames(type);
+                                foreach (string name in names)
+                                {
+                                    if (name.Equals(enumString, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        return Enum.Parse(type, name);
+                                    }
+                                }
+                                throw;
+                            }
+                        }
+                        else
+                        {
+                            string typeString = enumString.Substring(0, pointIndex);
+                            string valueString = enumString.Substring(pointIndex + 1);
+                            try
+                            {
+                                return Enum.Parse(type, valueString);
+                            }
+                            catch (ArgumentException)
+                            {
+                                string[] names = Enum.GetNames(type);
+                                foreach (string name in names)
+                                {
+                                    if (name.Equals(valueString, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        return Enum.Parse(type, name);
+                                    }
+                                }
+                                throw;
+                            }
+                        }
                     }
                     throw new InvalidCastException($"can not cast to enum type, string excepted but {scalerRecord.ScalerType} received");
                 }

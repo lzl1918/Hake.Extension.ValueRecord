@@ -56,6 +56,10 @@ namespace Test
             string json = Hake.Extension.ValueRecord.Json.Converter.Json(record);
             TestType retValue = ObjectMapper.ToObject<TestType>(record);
             Assert.AreEqual(true, retValue.Equals(value));
+
+            json = "{\"enumValue\": \"a\", \"stringValue\":\"test\", \"arrayValue\":[1, 2, 3] }";
+            record = Hake.Extension.ValueRecord.Json.Converter.ReadJson(json);
+            retValue = ObjectMapper.ToObject<TestType>(record);
         }
     }
 }
