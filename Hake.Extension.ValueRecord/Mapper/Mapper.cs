@@ -9,7 +9,6 @@ using System.Text;
 
 namespace Hake.Extension.ValueRecord.Mapper
 {
-
     public static class ObjectMapper
     {
         private static readonly Type LIST_GENERIC_TYPE = typeof(List<object>).GetGenericTypeDefinition();
@@ -95,7 +94,21 @@ namespace Hake.Extension.ValueRecord.Mapper
                         continue;
                     propertyName = GetNameOrDefault(property, mapPropertyAttribute);
                     propertyValue = getMethod.Invoke(input, null);
-                    setRecord.Add(propertyName, ToRecord(propertyValue, ignoreKeyCase));
+                    if (mapPropertyAttribute.ConverterType == null)
+                    {
+                        setRecord.Add(propertyName, ToRecord(propertyValue, ignoreKeyCase));
+                    }
+                    else
+                    {
+#if NETSTANDARD2_0 || NET452
+                        MethodInfo convertToScaler = mapPropertyAttribute.ConverterType.GetMethod(nameof(IScalerTargetTypeConverter<string, string>.ConvertToScaler));
+#else
+                        MethodInfo convertToScaler = mapPropertyAttribute.ConverterType.GetRuntimeMethods().First(method => method.Name == nameof(IScalerTargetTypeConverter<string, string>.ConvertToScaler));
+#endif
+                        object converterObject = Activator.CreateInstance(mapPropertyAttribute.ConverterType);
+                        object scaler = convertToScaler.Invoke(converterObject, new object[] { propertyValue });
+                        setRecord.Add(propertyName, ToRecord(scaler, ignoreKeyCase));
+                    }
                 }
                 return setRecord;
             }
@@ -281,8 +294,23 @@ namespace Hake.Extension.ValueRecord.Mapper
                         propertyName = GetNameOrDefault(property, mapPropertyAttribute);
                         if (setRecord.TryGetValue(propertyName, out valueRecord))
                         {
-                            parameter[0] = ToObject(property.PropertyType, valueRecord);
-                            setMethod.Invoke(instance, parameter);
+                            if (mapPropertyAttribute.ConverterType == null || !(valueRecord is ScalerRecord convertedScalerRecord))
+                            {
+                                parameter[0] = ToObject(property.PropertyType, valueRecord);
+                                setMethod.Invoke(instance, parameter);
+                            }
+                            else
+                            {
+#if NETSTANDARD2_0 || NET452
+                                MethodInfo convertToTarget = mapPropertyAttribute.ConverterType.GetMethod(nameof(IScalerTargetTypeConverter<string, string>.ConvertToTarget));
+#else
+                                MethodInfo convertToTarget = mapPropertyAttribute.ConverterType.GetRuntimeMethods().First(method => method.Name == nameof(IScalerTargetTypeConverter<string, string>.ConvertToTarget));
+#endif
+                                object converterObject = Activator.CreateInstance(mapPropertyAttribute.ConverterType);
+                                object target = convertToTarget.Invoke(converterObject, new object[] { convertedScalerRecord.Value });
+                                parameter[0] = target;
+                                setMethod.Invoke(instance, parameter);
+                            }
                         }
                         else
                         {
